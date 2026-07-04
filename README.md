@@ -8,8 +8,8 @@ transcripts (RAG), with on-demand web research.
 Inspired by [Wirasm/dylan-record](https://github.com/Wirasm/dylan-record)
 (a macOS/Swift meeting recorder). This is its cross-platform sibling: capture
 happens in a **browser page** (Windows/Linux/macOS/ARM — anything that runs
-Chrome or Edge), and the heavy lifting runs on a **Linux GPU box** you own.
-Your meeting audio never has to leave your network.
+Chrome or Edge), and the heavy lifting runs on any sufficiently strong **GPU
+box** you own. Your meeting audio never has to leave your network.
 
 ## What it does
 
