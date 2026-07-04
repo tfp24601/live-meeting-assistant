@@ -1,0 +1,32 @@
+.settings-main { display: block; overflow-y: auto; padding: 0 0 40px; }
+.settings-main .panel { max-width: 880px; margin: 14px auto; border: 1px solid var(--line); border-radius: 10px; overflow: visible; }
+.settings-main h3 { font-size: 13px; color: var(--accent); margin: 18px 0 8px; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px 16px; }
+.form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.form-grid input[type="text"], .form-grid input[type="password"], .form-grid input:not([type]), .form-grid select {
+  background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 13px;
+}
+.form-grid input[type="checkbox"] { width: 16px; height: 16px; }
+.restart-badge { margin-left: 6px; font-size: 10px; color: var(--other); font-style: normal; border: 1px solid rgba(255,180,84,.4); border-radius: 4px; padding: 0 4px; }
+
+.banner { margin-top: 10px; background: rgba(255,180,84,.12); border: 1px solid rgba(255,180,84,.4); color: var(--other); border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.status-inline { font-size: 12px; color: var(--muted); }
+.btn-link { color: var(--text); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; font-size: 13px; }
+
+.sources-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sources-table th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 4px 8px; }
+.sources-table td { padding: 6px 8px; border-top: 1px solid var(--line); }
+.sources-table .mono { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+.disabled-row { opacity: .45; }
+
+.add-source { margin-top: 12px; }
+.add-source summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.add-source .form-grid { margin-top: 10px; }
+
+.ingest-row { margin-top: 14px; display: flex; gap: 10px; align-items: center; }
+.ingest-log { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-height: 220px; overflow-y: auto; font-size: 11px; margin-top: 8px; }
+.hint { font-size: 12px; color: var(--muted); }
+.advanced { margin-top: 16px; }
+.advanced summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.advanced .form-grid { margin-top: 10px; }

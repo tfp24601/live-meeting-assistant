@@ -1,0 +1,18 @@
+# Web server
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+
+# Local streaming STT (CTranslate2 backend + bundled Silero VAD; no torch needed)
+faster-whisper>=1.0.3
+
+# Numerics / audio
+numpy>=1.26.0
+
+# sources.yaml config
+pyyaml>=6.0
+
+# RAG retrieval (qdrant; fastembed for query embedding, ONNX/CPU)
+qdrant-client[fastembed]>=1.12.0
+
+# Speaker verification for in-person mode (ECAPA embeddings; pulls torch)
+speechbrain>=1.0

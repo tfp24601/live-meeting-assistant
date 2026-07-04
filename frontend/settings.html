@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings · Live Meeting Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/settings.css" />
+</head>
+<body>
+  <header>
+    <h1>Settings <small>· Live Meeting Assistant</small></h1>
+    <div class="controls">
+      <a href="/" class="btn-link">← Back to meeting</a>
+      <button id="saveBtn" disabled>Save changes</button>
+      <span id="saveStatus" class="status-inline"></span>
+    </div>
+    <div id="restartBanner" class="banner" hidden></div>
+  </header>
+
+  <main class="settings-main">
+    <section class="panel">
+      <h2>Knowledge sources</h2>
+      <table class="sources-table" id="sourcesTable">
+        <thead><tr><th>On</th><th>Label</th><th>Type</th><th>Location</th><th></th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <details class="add-source">
+        <summary>+ Add source</summary>
+        <div class="form-grid">
+          <label>id <input id="srcId" placeholder="my-blog" /></label>
+          <label>type
+            <select id="srcType">
+              <option value="ghost-site">ghost-site (crawl a Ghost blog)</option>
+              <option value="markdown-dir">markdown-dir (.md folder)</option>
+              <option value="transcript-dir">transcript-dir (diarized transcripts)</option>
+            </select>
+          </label>
+          <label>label <input id="srcLabel" placeholder="myblog.example.com" /></label>
+          <label id="srcUrlWrap">url <input id="srcUrl" placeholder="https://myblog.example.com" /></label>
+          <label id="srcPathWrap" hidden>path <input id="srcPath" placeholder="/home/me/docs" /></label>
+          <button id="srcAddBtn" class="ghost">Add</button>
+        </div>
+      </details>
+      <div class="ingest-row">
+        <button id="ingestBtn" class="ghost">⟳ Run ingestion now</button>
+        <span id="ingestState" class="status-inline"></span>
+      </div>
+      <pre id="ingestLog" class="ingest-log" hidden></pre>
+      <p class="hint">Disabling a source hides it from suggestions instantly (its data stays
+        indexed). Ingestion here runs on the app host — sources whose files live on another
+        machine should be ingested there instead (e.g. via cron).</p>
+    </section>
+
+    <section class="panel">
+      <h2>Profile & model</h2>
+      <div id="groupsMount"></div>
+      <details class="advanced"><summary>Advanced</summary><div id="advancedMount"></div></details>
+    </section>
+  </main>
+
+  <script src="/static/settings.js"></script>
+</body>
+</html>

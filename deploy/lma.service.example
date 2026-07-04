@@ -1,0 +1,19 @@
+# systemd USER unit for the backend. Install:
+#   sed "s|__INSTALL_DIR__|$PWD|" deploy/lma.service.example > ~/.config/systemd/user/lma.service
+#   systemctl --user daemon-reload && systemctl --user enable --now lma
+#   loginctl enable-linger $USER    # keep it running after logout
+[Unit]
+Description=Live Meeting Assistant backend (FastAPI + faster-whisper)
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=__INSTALL_DIR__
+Environment=PYTHONUNBUFFERED=1
+ExecStart=__INSTALL_DIR__/backend/run.sh
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

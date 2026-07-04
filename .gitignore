@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv-*/
+*.egg-info/
+
+# Env / secrets / deployment-local config
+*.env
+!.env.example
+sources.yaml
+settings.json
+
+# Whisper model cache (downloaded on first run)
+backend/models/
+data/
+
+# Logs
+*.log
+*.local.sh

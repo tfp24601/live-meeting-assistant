@@ -1,0 +1,29 @@
+# Knowledge sources for the assistant's RAG. Copy to sources.yaml and edit.
+# sources.yaml is deployment-local (gitignored); this example is the template.
+#
+# id:      stable key (becomes the qdrant payload value — don't rename later)
+# type:    ghost-site      crawl a Ghost blog via its sitemaps (url:)
+#          markdown-dir    ingest a directory of .md files (path:)
+#          transcript-dir  ingest '**Speaker**'-style diarized transcripts (path:)
+# label:   how the source is cited in suggestion cards
+# enabled: set false to IGNORE a source (retrieval filters it out instantly;
+#          its data stays in qdrant so re-enabling is instant too)
+
+sources:
+  - id: my-blog
+    type: ghost-site
+    label: myblog.example.com
+    url: https://myblog.example.com
+    enabled: true
+
+  - id: my-docs
+    type: markdown-dir
+    label: my-docs
+    path: /home/me/docs
+    enabled: true
+
+  - id: my-podcast
+    type: transcript-dir
+    label: My Podcast
+    path: /home/me/podcast/transcripts
+    enabled: true

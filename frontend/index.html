@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live Meeting Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Live Meeting Assistant</h1>
+    <div class="controls">
+      <span class="seg" id="modeSeg">
+        <button data-v="online" class="on">Online</button><button data-v="inperson">In person</button>
+      </span>
+      <span class="seg" id="partySeg">
+        <button data-v="one" class="on">One-on-one</button><button data-v="multi">Multiple</button>
+      </span>
+      <label id="micLabel"><input type="checkbox" id="micToggle" checked /> Mic (you)</label>
+      <label id="sysLabel"><input type="checkbox" id="sysToggle" checked /> System audio (them)</label>
+      <button id="startBtn">Start</button>
+      <button id="stopBtn" disabled>Stop</button>
+      <button id="exportVttBtn" class="ghost" disabled>Export VTT</button>
+      <button id="exportMdBtn" class="ghost" disabled>Export MD</button>
+      <button id="enrollBtn" class="ghost">🎙 Enroll voice</button>
+      <span id="enrollStatus" class="enroll-status"></span>
+      <a href="/settings" class="ghost btn-link" title="Sources, model, tuning">⚙</a>
+    </div>
+    <div id="status" class="status">idle</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Transcript</h2>
+      <div id="transcript" class="transcript"></div>
+    </section>
+    <section class="panel suggestions">
+      <div class="sugg-header">
+        <h2>Suggestions</h2>
+        <span id="suggStatus" class="sugg-status"></span>
+        <button id="deepDiveBtn" class="ghost" disabled title="Slower run that may search the web for current facts">🌐 Deep dive</button>
+        <button id="suggestNowBtn" class="ghost" disabled>Suggest now</button>
+      </div>
+      <div id="pinned" class="pinned">
+        <div class="placeholder">📌 Pin a suggestion to keep it here until you've used it.</div>
+      </div>
+      <div id="cards" class="cards">
+        <div class="placeholder">Click Start — suggestion cards appear as the conversation develops.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Tip: to capture the other participants, click <strong>Start</strong>, then in the
+      share dialog pick the meeting tab/window/screen and <strong>check “Share audio”</strong>.
+      Use headphones to avoid echo into the mic.
+    </p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
