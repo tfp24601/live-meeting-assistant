@@ -24,6 +24,8 @@ class LLMError(RuntimeError):
 _MODULES = {
     "claude-cli": ".claude_cli",
     "anthropic-api": ".anthropic_api",
+    "ollama-cloud": ".ollama_cloud",
+    "ollama-local": ".ollama_local",
     "openai-compatible": ".openai_compat",
     "custom-command": ".custom_cmd",
 }

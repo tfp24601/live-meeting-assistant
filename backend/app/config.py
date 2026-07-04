@@ -57,6 +57,13 @@ FIELDS: list[Field] = [
     Field("openai_compat_model", "OPENAI_COMPAT_MODEL", str, ""),
     Field("openai_compat_deep_model", "OPENAI_COMPAT_DEEP_MODEL", str, ""),
     Field("custom_llm_cmd", "CUSTOM_LLM_CMD", str, ""),
+    Field("ollama_local_base_url", "OLLAMA_LOCAL_BASE_URL", str, "http://127.0.0.1:11434/v1"),
+    Field("ollama_local_model", "OLLAMA_LOCAL_MODEL", str, ""),
+    Field("ollama_local_deep_model", "OLLAMA_LOCAL_DEEP_MODEL", str, ""),
+    Field("ollama_cloud_base_url", "OLLAMA_CLOUD_BASE_URL", str, "https://ollama.com/v1"),
+    Field("ollama_cloud_api_key", "OLLAMA_CLOUD_API_KEY", str, "", secret=True),
+    Field("ollama_cloud_model", "OLLAMA_CLOUD_MODEL", str, ""),
+    Field("ollama_cloud_deep_model", "OLLAMA_CLOUD_DEEP_MODEL", str, ""),
     # whisper (loaded once at startup)
     Field("whisper_model", "WHISPER_MODEL", str, "small.en", restart=True),
     Field("whisper_device", "WHISPER_DEVICE", str, "cuda", restart=True),

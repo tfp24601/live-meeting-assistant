@@ -39,7 +39,9 @@ Your meeting audio never has to leave your network.
 | --- | --- | --- |
 | `claude-cli` (default) | `claude` CLI logged in on the host | Bills to a Claude Pro/Max subscription; enables web-search deep dives |
 | `anthropic-api` | `ANTHROPIC_API_KEY` | Pay-as-you-go |
-| `openai-compatible` | base URL + key | Ollama, OpenRouter, LM Studio, vLLM, … |
+| `ollama-cloud` | `OLLAMA_CLOUD_API_KEY` + model | Hosted big open models (GLM, DeepSeek, Qwen, …) |
+| `ollama-local` | `ollama serve` + a pulled model | Fully private, no cloud at all |
+| `openai-compatible` | base URL + key | OpenRouter, LM Studio, vLLM, anything else |
 | `custom-command` | any shell command | Prompt on stdin, reply on stdout — wire in anything |
 
 ## Quickstart
