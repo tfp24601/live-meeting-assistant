@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 
 from ..config import settings
 from ..sources_config import disabled_ids, label_map
@@ -19,17 +20,61 @@ EMBED_MODEL = "BAAI/bge-base-en-v1.5"   # must match ingestion (backend/ingest/c
 _lock = threading.Lock()
 _client = None
 _embedder = None
+_available: bool | None = None   # None = never tried; drives transition logging
+_last_error = ""
+_RETRY_S = 30
+
+
+def _mark(ok: bool, error: str = "") -> None:
+    """Log only on state TRANSITIONS so gaps are visible in the journal."""
+    global _available, _last_error
+    if ok and _available is not True:
+        log.info("retrieval ready (%s @ %s)%s", settings.rag_collection,
+                 settings.qdrant_url, " — RECOVERED" if _available is False else "")
+    elif not ok and _available is not False:
+        log.warning("retrieval UNAVAILABLE (suggestions continue without RAG): %s", error)
+    _available = ok
+    _last_error = error
+
+
+def status() -> str:
+    if not settings.rag_enabled:
+        return "disabled"
+    if _available is True:
+        return "ready"
+    if _available is False:
+        return f"unavailable: {_last_error[:120]}"
+    return "not yet connected"
 
 
 def warmup() -> None:
-    """Load the embedding model + client at boot so the first run isn't slow."""
+    """Connect at boot; on failure keep retrying in the background until the
+    knowledge store answers (e.g. hosts booted in the wrong order)."""
     if not settings.rag_enabled:
         return
     try:
-        _ensure()
-        log.info("retrieval ready (%s @ %s)", settings.rag_collection, settings.qdrant_url)
+        _probe()
+        _mark(True)
+        return
     except Exception as e:  # noqa: BLE001
-        log.warning("retrieval warmup failed (suggestions will run without RAG): %s", e)
+        _mark(False, str(e))
+
+    def _retry_loop() -> None:
+        while _available is not True and settings.rag_enabled:
+            time.sleep(_RETRY_S)
+            try:
+                _probe()
+                _mark(True)
+            except Exception as e:  # noqa: BLE001
+                _mark(False, str(e))  # transition-logged only, no spam
+
+    threading.Thread(target=_retry_loop, name="rag-retry", daemon=True).start()
+
+
+def _probe() -> None:
+    """A real round-trip, not just client construction."""
+    client, _ = _ensure()
+    client.get_collection(settings.rag_collection)
 
 
 def _ensure():
@@ -78,9 +123,10 @@ def search(query: str) -> list[dict]:
                 "title": p.get("title", ""),
                 "text": p.get("text", ""),
             })
+        _mark(True)
         return out
     except Exception as e:  # noqa: BLE001 - RAG must never block suggestions
-        log.warning("retrieval failed (continuing without): %s", e)
+        _mark(False, str(e))
         return []
 
 

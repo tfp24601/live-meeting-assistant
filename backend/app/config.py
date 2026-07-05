@@ -70,6 +70,10 @@ FIELDS: list[Field] = [
     Field("whisper_compute_type", "WHISPER_COMPUTE_TYPE", str, "float16", restart=True),
     Field("whisper_language", "WHISPER_LANGUAGE", str, "", restart=True),
     Field("whisper_beam_size", "WHISPER_BEAM_SIZE", int, 1, restart=True),
+    # Watchdog: a single transcription (incl. lock wait) exceeding this means
+    # the GPU call wedged; the process exits and systemd respawns it clean.
+    # 0 disables. Normal calls take well under a second.
+    Field("whisper_watchdog_s", "WHISPER_WATCHDOG_S", float, 30.0),
     # endpointing (picked up per new connection)
     Field("vad_threshold", "VAD_THRESHOLD", float, 0.008),
     Field("endpoint_silence_ms", "ENDPOINT_SILENCE_MS", int, 800),

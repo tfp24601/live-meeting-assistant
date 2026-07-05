@@ -70,44 +70,77 @@ async function ensureContext() {
   return audioCtx;
 }
 
+function makeAudioWs(name) {
+  const ws = new WebSocket(wsUrl("/ws/audio", { source: name }));
+  ws.binaryType = "arraybuffer";
+  ws.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.type === "transcript") addLine(msg);
+  };
+  return ws;
+}
+
 // Wire one MediaStream's audio into the worklet -> WS pipeline.
 async function startSource(name, stream) {
   const ctx = await ensureContext();
   if (ctx.state === "suspended") await ctx.resume();
   sourceEpochs[name] = Date.now(); // aligns this stream's t0-relative times to the wall clock
 
-  const ws = new WebSocket(wsUrl("/ws/audio", { source: name }));
-  ws.binaryType = "arraybuffer";
+  const ws = makeAudioWs(name);
   ws.onopen = () => setStatus(`streaming: ${activeNames().join(" + ")}`);
-  ws.onclose = () => stopSource(name, /*fromWs=*/true);
+  ws.onclose = () => scheduleReconnect(name);
   ws.onerror = () => setStatus(`websocket error (${name})`);
-  ws.onmessage = (ev) => {
-    const msg = JSON.parse(ev.data);
-    if (msg.type === "transcript") addLine(msg);
-  };
 
   const srcNode = ctx.createMediaStreamSource(stream);
   const worklet = new AudioWorkletNode(ctx, "pcm-worklet");
   worklet.port.onmessage = (ev) => {
-    if (ws.readyState === WebSocket.OPEN) ws.send(ev.data);
+    // Look the socket up each time: reconnects swap it out under us.
+    const s = sources[name];
+    if (s && s.ws.readyState === WebSocket.OPEN) s.ws.send(ev.data);
   };
   srcNode.connect(worklet);
   // Do NOT connect to destination — we don't want to play the audio back.
 
-  sources[name] = { stream, node: worklet, srcNode, ws };
+  sources[name] = { stream, node: worklet, srcNode, ws, userStopped: false, reconnecting: false };
+}
+
+// The backend dropped (e.g. watchdog self-restart). The media stream is still
+// alive in this page, so keep it and re-attach when the server comes back.
+function scheduleReconnect(name) {
+  const s = sources[name];
+  if (!s || s.userStopped || s.reconnecting) return;
+  s.reconnecting = true;
+  setStatus("backend connection lost — reconnecting… (capture is still running)");
+  const attempt = () => {
+    if (!sources[name] || s.userStopped) return;
+    const nw = makeAudioWs(name);
+    nw.onopen = () => {
+      s.ws = nw;
+      s.reconnecting = false;
+      // The server restarted its per-connection clock; re-anchor exports.
+      sourceEpochs[name] = Date.now();
+      nw.onclose = () => scheduleReconnect(name);
+      setStatus(`reconnected — streaming: ${activeNames().join(" + ")}`);
+      connectSuggestions();
+    };
+    nw.onclose = () => { if (s.reconnecting) setTimeout(attempt, 3000); };
+    nw.onerror = () => {};
+  };
+  attempt();
 }
 
 function activeNames() {
   return Object.keys(sources);
 }
 
-function stopSource(name, fromWs = false) {
+function stopSource(name) {
   const s = sources[name];
   if (!s) return;
+  s.userStopped = true;
   try { s.srcNode.disconnect(); } catch {}
   try { s.node.disconnect(); } catch {}
   try { s.stream.getTracks().forEach((t) => t.stop()); } catch {}
-  if (!fromWs && s.ws.readyState === WebSocket.OPEN) s.ws.close();
+  try { if (s.ws.readyState === WebSocket.OPEN) s.ws.close(); } catch {}
   delete sources[name];
   if (activeNames().length === 0) {
     setStatus("stopped");
@@ -220,7 +253,13 @@ function connectSuggestions() {
   if (suggWs && (suggWs.readyState === WebSocket.OPEN || suggWs.readyState === WebSocket.CONNECTING)) return;
   suggWs = new WebSocket(wsUrl("/ws/suggestions", {}));
   suggWs.onopen = () => { $("suggestNowBtn").disabled = false; $("deepDiveBtn").disabled = false; };
-  suggWs.onclose = () => { $("suggestNowBtn").disabled = true; $("deepDiveBtn").disabled = true; setSuggStatus(""); };
+  suggWs.onclose = () => {
+    $("suggestNowBtn").disabled = true;
+    $("deepDiveBtn").disabled = true;
+    setSuggStatus("");
+    // Auto-reconnect while a capture is active (backend restart mid-meeting).
+    if (activeNames().length > 0) setTimeout(connectSuggestions, 3000);
+  };
   suggWs.onmessage = (ev) => {
     const msg = JSON.parse(ev.data);
     if (msg.type === "suggestions") renderCards(msg);

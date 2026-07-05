@@ -14,7 +14,9 @@ The audio path:
 from __future__ import annotations
 
 import logging
+import os
 import threading
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -54,6 +56,37 @@ def get_model():
         )
         log.info("whisper model loaded")
         return _model
+
+
+def _die_wedged(elapsed: float) -> None:
+    log.critical(
+        "transcription wedged (%.0fs > %.0fs watchdog) — GPU call is stuck and "
+        "cannot be freed in-process; exiting so systemd respawns a clean process",
+        elapsed, settings.whisper_watchdog_s,
+    )
+    logging.shutdown()
+    os._exit(1)  # noqa: SLF001 - deliberate: a wedged CUDA context cannot be recovered in-process
+
+
+async def transcribe_watched(audio: np.ndarray, _fn=None, _die=None) -> str:
+    """transcribe() in a thread, under the wedge watchdog.
+
+    A hung CUDA call blocks its thread forever AND poisons the shared lock, so
+    every stream would freeze silently (observed live 2026-07-05). Exceeding
+    the watchdog converts that permanent silent freeze into a ~20s automatic
+    restart. (_fn/_die are test injection points.)
+    """
+    import asyncio
+    fn = _fn or transcribe
+    timeout = settings.whisper_watchdog_s
+    if not timeout or timeout <= 0:
+        return await asyncio.to_thread(fn, audio)
+    t0 = time.monotonic()
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(fn, audio), timeout=timeout)
+    except asyncio.TimeoutError:
+        (_die or _die_wedged)(time.monotonic() - t0)
+        return ""  # only reachable with an injected _die
 
 
 def transcribe(audio: np.ndarray) -> str:

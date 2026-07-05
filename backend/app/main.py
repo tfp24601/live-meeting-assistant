@@ -19,7 +19,7 @@ from . import meeting
 from .config import settings
 from .speaker import verify as speaker
 from .suggestions.engine import SuggestionEngine
-from .transcription.whisper_engine import StreamingTranscriber, get_model, transcribe
+from .transcription.whisper_engine import StreamingTranscriber, get_model, transcribe_watched
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("lma.main")
@@ -56,6 +56,8 @@ async def index() -> FileResponse:
 
 @app.get("/health")
 async def health() -> dict:
+    from .llm import provider_name
+    from .suggestions import retrieval
     model = get_model()
     return {
         "status": "ok",
@@ -63,6 +65,8 @@ async def health() -> dict:
         "device": settings.whisper_device,
         "compute_type": settings.whisper_compute_type,
         "model_loaded": model is not None,
+        "rag": retrieval.status(),
+        "provider": provider_name(),
     }
 
 
@@ -95,7 +99,7 @@ async def ws_audio(ws: WebSocket) -> None:
             if utt is None:  # shutdown sentinel
                 return
             try:
-                text = await asyncio.to_thread(transcribe, utt.audio)
+                text = await transcribe_watched(utt.audio)
             except Exception:  # noqa: BLE001 - never kill the socket on a transcription error
                 log.exception("transcription failed")
                 continue
