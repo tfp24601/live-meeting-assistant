@@ -4,6 +4,8 @@
 
 .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px 16px; }
 .form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+/* the hidden attribute must beat our display:flex (provider-aware fields) */
+.form-grid label[hidden] { display: none !important; }
 .form-grid input[type="text"], .form-grid input[type="password"], .form-grid input:not([type]), .form-grid select {
   background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 13px;
 }

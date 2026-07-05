@@ -26,12 +26,14 @@ async function loadAppConfig() {
   try {
     const r = await fetch("/api/config");
     appCfg = await r.json();
-    $("deepDiveBtn").style.display = appCfg.deep_dive ? "" : "none";
+    // Deep dive works on every provider (web search only where supported).
+    $("deepDiveBtn").textContent = appCfg.deep_dive ? "🌐 Deep dive" : "🔍 Deep dive";
+    $("deepDiveBtn").title = appCfg.deep_dive
+      ? "Slower run using the deep model; may search the web for current facts"
+      : "Slower, more thorough run using the deep model (this provider has no web search)";
     const m = appCfg.models || {};
-    const parts = [`quick: ${m.fast || "—"}`];
-    if (appCfg.deep_dive || (m.deep && m.deep !== m.fast)) parts.push(`deep: ${m.deep || "—"}`);
     $("modelInfo").textContent =
-      `Currently selected models · ${appCfg.provider} — ${parts.join(" · ")}`;
+      `Currently selected models · ${appCfg.provider} — quick: ${m.fast || "—"} · deep: ${m.deep || "—"}`;
   } catch { /* defaults stand */ }
 }
 

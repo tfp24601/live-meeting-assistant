@@ -59,6 +59,10 @@ DEEP_ADDENDUM = """
 
 For THIS run you also have the WebSearch tool. Search the web when current, verifiable facts would strengthen a card (recent news, versions, prices, dates, statistics). Prefer 1-2 targeted searches over many. End the detail of any web-sourced card with the source domain in parentheses, e.g. "(proxmox.com)". Your final reply must still be ONLY the JSON card array."""
 
+DEEP_NOWEB_ADDENDUM = """
+
+This is a deep-dive run: take extra care. Reason thoroughly about where the conversation is heading, favor substance over speed, and produce your most insightful, well-grounded cards. Do not fabricate specifics you are not confident about. Your final reply must still be ONLY the JSON card array."""
+
 
 def _parse_cards(text: str) -> list[dict]:
     """Extract a list of {kind,title,detail} cards from model output."""
@@ -141,14 +145,9 @@ class SuggestionEngine:
     async def _run_once(self) -> None:
         deep = self._deep_next
         self._deep_next = False
-        if deep and not supports_web_search():
-            log.warning("deep dive requested but provider %s lacks web search; running normal",
-                        provider_name())
-            await self.session.broadcast({
-                "type": "suggest_status", "state": "error",
-                "msg": f"web deep dive isn't supported by the {provider_name()} provider; ran a normal suggestion instead",
-            })
-            deep = False
+        # Deep dives run on every provider: the deep model + extra care always;
+        # web search only where the provider supports it.
+        web = deep and supports_web_search()
         self._last_run_t = time.monotonic()
         snapshot = list(self.session.lines)
         self._consumed = sum(len(l.text) for l in snapshot)
@@ -159,10 +158,11 @@ class SuggestionEngine:
             "state": "researching" if deep else "thinking",
         })
         t0 = time.monotonic()
-        system_prompt = build_system_prompt() + (DEEP_ADDENDUM if deep else "")
+        system_prompt = build_system_prompt() + (
+            DEEP_ADDENDUM if web else (DEEP_NOWEB_ADDENDUM if deep else ""))
         try:
             result, meta = await generate(system_prompt, prompt,
-                                          fast=not deep, web_search=deep)
+                                          fast=not deep, web_search=web)
         except LLMError as e:
             log.error("LLM call failed (%s): %s", provider_name(), e)
             await self.session.broadcast({
