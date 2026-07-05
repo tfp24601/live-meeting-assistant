@@ -53,7 +53,10 @@ button:disabled { opacity: .4; cursor: default; }
 button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
 a.btn-link { color: var(--text); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 13px; }
 
-.status { margin-top: 8px; font-size: 13px; color: var(--accent); min-height: 18px; }
+.status-row { margin-top: 8px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.status { font-size: 13px; color: var(--accent); min-height: 18px; }
+.model-info { font-size: 12px; color: var(--muted); text-decoration: none; margin-left: auto; }
+.model-info:hover { color: var(--text); }
 
 main {
   flex: 1;

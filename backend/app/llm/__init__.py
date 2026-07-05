@@ -43,6 +43,25 @@ def provider_name() -> str:
     return settings.llm_provider
 
 
+def active_models() -> dict:
+    """The quick-loop and deep-dive model names the active provider will use."""
+    p = settings.llm_provider
+    if p == "claude-cli":
+        return {"fast": settings.suggest_model, "deep": settings.deep_model}
+    if p == "anthropic-api":
+        return {"fast": settings.anthropic_model, "deep": settings.anthropic_deep_model}
+    if p == "ollama-cloud":
+        fast = settings.ollama_cloud_model
+        return {"fast": fast, "deep": settings.ollama_cloud_deep_model or fast}
+    if p == "ollama-local":
+        fast = settings.ollama_local_model
+        return {"fast": fast, "deep": settings.ollama_local_deep_model or fast}
+    if p == "openai-compatible":
+        fast = settings.openai_compat_model
+        return {"fast": fast, "deep": settings.openai_compat_deep_model or fast}
+    return {"fast": "(custom command)", "deep": "(custom command)"}
+
+
 def supports_web_search() -> bool:
     try:
         return bool(getattr(_provider(), "SUPPORTS_WEB_SEARCH", False))

@@ -152,11 +152,12 @@ async def ws_audio(ws: WebSocket) -> None:
 @app.get("/api/config")
 async def api_config() -> dict:
     from . import sources_config
-    from .llm import provider_name, supports_web_search
+    from .llm import active_models, provider_name, supports_web_search
     return {
         "user_name": settings.user_name,
         "public_url": settings.public_url,
         "provider": provider_name(),
+        "models": active_models(),
         "deep_dive": supports_web_search(),
         "sources": [
             {"id": s["id"], "label": s["label"], "enabled": s.get("enabled", True)}

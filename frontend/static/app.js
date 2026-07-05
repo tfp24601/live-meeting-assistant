@@ -26,9 +26,17 @@ async function loadAppConfig() {
   try {
     const r = await fetch("/api/config");
     appCfg = await r.json();
-    if (!appCfg.deep_dive) $("deepDiveBtn").style.display = "none";
+    $("deepDiveBtn").style.display = appCfg.deep_dive ? "" : "none";
+    const m = appCfg.models || {};
+    const parts = [`quick: ${m.fast || "—"}`];
+    if (appCfg.deep_dive || (m.deep && m.deep !== m.fast)) parts.push(`deep: ${m.deep || "—"}`);
+    $("modelInfo").textContent =
+      `Currently selected models · ${appCfg.provider} — ${parts.join(" · ")}`;
   } catch { /* defaults stand */ }
 }
+
+// Settings may change in another tab — refresh the indicator on return.
+window.addEventListener("focus", loadAppConfig);
 
 function setStatus(msg) {
   statusEl.textContent = msg;
