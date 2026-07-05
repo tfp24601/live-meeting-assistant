@@ -14,6 +14,14 @@ from .openai_compat import chat
 SUPPORTS_WEB_SEARCH = False
 
 
+async def list_models() -> dict:
+    if not settings.ollama_cloud_api_key:
+        return {"models": [], "note": "save your Ollama Cloud API key first, then refresh"}
+    from .openai_compat import list_openai_models
+    return await list_openai_models(settings.ollama_cloud_base_url,
+                                    settings.ollama_cloud_api_key)
+
+
 async def generate(system_prompt: str, user_prompt: str, *, fast: bool = True,
                    timeout: float | None = None, web_search: bool = False):
     if not settings.ollama_cloud_api_key:

@@ -46,6 +46,45 @@ def _child_env() -> dict[str, str]:
     return env
 
 
+_ALIASES = ["sonnet", "opus", "haiku"]  # always valid; resolve to latest
+
+
+async def list_models() -> dict:
+    """Live model list via the CLI's own OAuth token (read locally, sent only
+    to Anthropic's official /v1/models endpoint, never exposed to the UI)."""
+    import json as _json
+    from pathlib import Path
+
+    import httpx
+
+    creds_path = Path.home() / ".claude" / ".credentials.json"
+    try:
+        creds = _json.loads(creds_path.read_text())
+        token = creds.get("claudeAiOauth", {}).get("accessToken") or creds.get("accessToken", "")
+    except (OSError, _json.JSONDecodeError):
+        token = ""
+    if not token:
+        return {"models": _ALIASES,
+                "note": "aliases only (no CLI credentials found for a live list)"}
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                "https://api.anthropic.com/v1/models?limit=100",
+                headers={
+                    "authorization": f"Bearer {token}",
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-beta": "oauth-2025-04-20",
+                },
+            )
+        if r.status_code != 200:
+            return {"models": _ALIASES,
+                    "note": f"aliases only (models endpoint said {r.status_code})"}
+        ids = [m["id"] for m in r.json().get("data", []) if m.get("id")]
+        return {"models": _ALIASES + ids, "note": "aliases resolve to the latest model"}
+    except httpx.HTTPError as e:
+        return {"models": _ALIASES, "note": f"aliases only (live list failed: {e})"}
+
+
 def _extract_result(stdout: str) -> dict:
     idx = stdout.find('{"type"')
     if idx < 0:

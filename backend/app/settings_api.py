@@ -44,6 +44,12 @@ async def put_settings(changes: dict) -> dict:
     return {"ok": True, "restart_needed": restart_needed}
 
 
+@router.get("/models/{provider}")
+async def get_models(provider: str) -> dict:
+    from .llm import list_models
+    return await list_models(provider)
+
+
 # ---- knowledge sources ------------------------------------------------------
 
 @router.get("/sources")

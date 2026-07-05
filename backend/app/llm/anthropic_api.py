@@ -14,6 +14,20 @@ SUPPORTS_WEB_SEARCH = False
 API_URL = "https://api.anthropic.com/v1/messages"
 
 
+async def list_models() -> dict:
+    if not settings.anthropic_api_key:
+        return {"models": [], "note": "save your Anthropic API key first, then refresh"}
+    async with httpx.AsyncClient(timeout=8) as client:
+        r = await client.get(
+            "https://api.anthropic.com/v1/models?limit=100",
+            headers={"x-api-key": settings.anthropic_api_key,
+                     "anthropic-version": "2023-06-01"},
+        )
+    if r.status_code != 200:
+        return {"models": [], "error": f"models endpoint said {r.status_code}"}
+    return {"models": [m["id"] for m in r.json().get("data", []) if m.get("id")]}
+
+
 async def generate(system_prompt: str, user_prompt: str, *, fast: bool = True,
                    timeout: float | None = None, web_search: bool = False):
     if not settings.anthropic_api_key:

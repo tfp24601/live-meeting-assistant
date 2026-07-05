@@ -13,6 +13,14 @@ from .openai_compat import chat
 SUPPORTS_WEB_SEARCH = False
 
 
+async def list_models() -> dict:
+    from .openai_compat import list_openai_models
+    result = await list_openai_models(settings.ollama_local_base_url, "")
+    if not result.get("models") and not result.get("error"):
+        result["note"] = "no models — is `ollama serve` running with models pulled?"
+    return result
+
+
 async def generate(system_prompt: str, user_prompt: str, *, fast: bool = True,
                    timeout: float | None = None, web_search: bool = False):
     model = settings.ollama_local_model if fast else \

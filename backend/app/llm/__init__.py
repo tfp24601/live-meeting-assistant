@@ -55,3 +55,21 @@ async def generate(system_prompt: str, user_prompt: str, *, fast: bool = True,
     return await _provider().generate(
         system_prompt, user_prompt, fast=fast, timeout=timeout, web_search=web_search,
     )
+
+
+async def list_models(provider: str) -> dict:
+    """Model discovery for the settings screen. Always returns a dict:
+    {models: [...]} plus optional note/error — never raises."""
+    mod_path = _MODULES.get(provider)
+    if mod_path is None:
+        return {"models": [], "error": f"unknown provider {provider!r}"}
+    mod = import_module(mod_path, package=__name__)
+    lister = getattr(mod, "list_models", None)
+    if lister is None:
+        return {"models": [], "note": "this provider has no model discovery — type a name"}
+    try:
+        return await lister()
+    except LLMError as e:
+        return {"models": [], "error": str(e)}
+    except Exception as e:  # noqa: BLE001 - discovery must never break the settings page
+        return {"models": [], "error": f"{type(e).__name__}: {e}"}

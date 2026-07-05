@@ -29,6 +29,60 @@ const PROVIDER_FIELDS = {
 };
 const ALL_PROVIDER_FIELDS = [...new Set(Object.values(PROVIDER_FIELDS).flat())];
 
+// Model-name fields per provider get a live dropdown (datalist: pick OR type).
+const MODEL_ENVS = {
+  "claude-cli": ["SUGGEST_MODEL", "DEEP_MODEL"],
+  "anthropic-api": ["ANTHROPIC_MODEL", "ANTHROPIC_DEEP_MODEL"],
+  "ollama-cloud": ["OLLAMA_CLOUD_MODEL", "OLLAMA_CLOUD_DEEP_MODEL"],
+  "ollama-local": ["OLLAMA_LOCAL_MODEL", "OLLAMA_LOCAL_DEEP_MODEL"],
+  "openai-compatible": ["OPENAI_COMPAT_MODEL", "OPENAI_COMPAT_DEEP_MODEL"],
+};
+
+function modelDatalist() {
+  let dl = document.getElementById("modelList");
+  if (!dl) {
+    dl = document.createElement("datalist");
+    dl.id = "modelList";
+    document.body.appendChild(dl);
+  }
+  return dl;
+}
+
+async function refreshModels(provider) {
+  const note = document.getElementById("modelsNote");
+  // the shared datalist follows the selected provider's model fields
+  for (const [p, envs] of Object.entries(MODEL_ENVS)) {
+    for (const env of envs) {
+      const el = document.getElementById("f_" + env);
+      if (el) {
+        if (p === provider) el.setAttribute("list", "modelList");
+        else el.removeAttribute("list");
+      }
+    }
+  }
+  if (!(provider in MODEL_ENVS)) { if (note) note.textContent = ""; return; }
+  if (note) note.textContent = "discovering models…";
+  try {
+    const r = await fetch("/api/models/" + encodeURIComponent(provider));
+    const d = await r.json();
+    const dl = modelDatalist();
+    dl.innerHTML = "";
+    for (const m of d.models || []) {
+      const o = document.createElement("option");
+      o.value = m;
+      dl.appendChild(o);
+    }
+    if (note) {
+      note.textContent = (d.models || []).length
+        ? `${d.models.length} models available — clear a model field to see the list` +
+          (d.note ? ` · ${d.note}` : "")
+        : (d.error || d.note || "no models discovered — type a name");
+    }
+  } catch {
+    if (note) note.textContent = "model discovery failed — type a name";
+  }
+}
+
 let fields = [];
 let claudeCliAvailable = false;
 
@@ -79,8 +133,16 @@ function renderField(f) {
       sel.appendChild(o);
     }
     sel.id = "f_" + f.env;
-    sel.addEventListener("change", () => { markDirty(f.env, sel.value); applyProviderVisibility(sel.value); });
+    sel.addEventListener("change", () => {
+      markDirty(f.env, sel.value);
+      applyProviderVisibility(sel.value);
+      refreshModels(sel.value);
+    });
     label.appendChild(sel);
+    const note = document.createElement("span");
+    note.id = "modelsNote";
+    note.className = "hint";
+    label.appendChild(note);
   } else {
     label.appendChild(fieldInput(f));
   }
@@ -128,7 +190,9 @@ async function loadSettings() {
   grid.className = "form-grid";
   for (const f of fields) if (!placed.has(f.env)) grid.appendChild(renderField(f));
   adv.appendChild(grid);
-  applyProviderVisibility(byEnv["LLM_PROVIDER"]?.value || "claude-cli");
+  const provider = byEnv["LLM_PROVIDER"]?.value || "claude-cli";
+  applyProviderVisibility(provider);
+  refreshModels(provider);
 }
 
 async function save() {
@@ -145,6 +209,9 @@ async function save() {
   const res = await r.json();
   Object.keys(dirty).forEach((k) => delete dirty[k]);
   $("saveStatus").textContent = "saved ✓";
+  // a just-saved key may unlock model discovery (e.g. Ollama Cloud)
+  const provSel = document.getElementById("f_LLM_PROVIDER");
+  if (provSel) refreshModels(provSel.value);
   const banner = $("restartBanner");
   if (res.restart_needed && res.restart_needed.length) {
     banner.hidden = false;

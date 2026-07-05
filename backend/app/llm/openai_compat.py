@@ -48,6 +48,26 @@ async def chat(provider: str, base_url: str, api_key: str, model: str,
     return text, {"provider": provider, "model": model}
 
 
+async def list_openai_models(base_url: str, api_key: str) -> dict:
+    """GET {base}/models — the standard OpenAI-compatible discovery endpoint."""
+    if not base_url:
+        return {"models": [], "note": "set the base URL first"}
+    headers = {}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    async with httpx.AsyncClient(timeout=8) as client:
+        r = await client.get(base_url.rstrip("/") + "/models", headers=headers)
+    if r.status_code != 200:
+        return {"models": [], "error": f"models endpoint said {r.status_code}: {r.text[:120]}"}
+    ids = sorted(m.get("id", "") for m in r.json().get("data", []) if m.get("id"))
+    return {"models": ids}
+
+
+async def list_models() -> dict:
+    return await list_openai_models(settings.openai_compat_base_url,
+                                    settings.openai_compat_api_key)
+
+
 async def generate(system_prompt: str, user_prompt: str, *, fast: bool = True,
                    timeout: float | None = None, web_search: bool = False):
     model = settings.openai_compat_model if fast else \
